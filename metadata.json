@@ -1,0 +1,6 @@
+{
+  "name": "Analisador de Balanço Contábil",
+  "description": "Analisador inteligente de demonstrações contábeis em PDF. Extrai balanços, DRE, gera gráficos interativos de indicadores e cria relatórios executivos prontos para apresentação.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
