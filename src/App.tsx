@@ -174,11 +174,38 @@ export default function App() {
         clearInterval(stepperInterval);
 
         if (!response.ok) {
-          const errData = await response.json();
           if (response.status === 401) {
             throw new Error('KEY_MISSING');
           }
-          throw new Error(errData.message || 'Falha na resposta do servidor.');
+          
+          let errorMessage = 'Falha na resposta do servidor.';
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              const errData = await response.json();
+              errorMessage = errData.message || errorMessage;
+            } catch (e) {
+              errorMessage = 'Ocorreu um erro ao processar os dados contábeis no servidor.';
+            }
+          } else {
+            const textResponse = await response.text();
+            if (response.status === 404) {
+              errorMessage = 'O serviço de análise (/api/analyze-pdf) não foi encontrado (Erro 404). Se você publicou na Vercel, certifique-se de que a função de backend (Serverless) está ativada ou tente utilizar o modo de demonstração (Demo).';
+            } else if (response.status === 413) {
+              errorMessage = 'O arquivo PDF enviado é muito grande (Erro 413 - Payload Too Large). Tente enviar um arquivo menor ou comprimido.';
+            } else {
+              const cleanedText = textResponse.replace(/<[^>]*>/g, '').substring(0, 150).trim();
+              errorMessage = `Erro ${response.status} do servidor: ${cleanedText || 'Resposta inválida'}`;
+            }
+          }
+          throw new Error(errorMessage);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const textResponse = await response.text();
+          const cleanedText = textResponse.replace(/<[^>]*>/g, '').substring(0, 150).trim();
+          throw new Error(`O servidor não retornou um formato de dados válido (HTML/texto recebido). Detalhes: ${cleanedText || 'Resposta inválida'}`);
         }
 
         const resultData: AnalysisResponse = await response.json();
